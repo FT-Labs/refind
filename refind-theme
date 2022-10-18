@@ -1,0 +1,29 @@
+#!/bin/bash
+
+opts=$(cat <<EOF
+install=action=store_true
+set=action=store_true
+background=type=str
+
+EOF
+)
+
+themes="https://raw.githubusercontent.com/FT-Labs/phyOS-refind-themes/master/themes.txt"
+themes="EXIT $(curl --silent $themes)"
+
+args=$(printf "$opts" | pygetopts "$@")
+eval "$args" &> /dev/null || (echo "$args" | sed 's/pygetopts/refind-theme/g' && exit)
+
+if [[ ! -z $install ]]; then
+    install=$(gum choose $themes)
+    [[ $install = "EXIT" ]] && exit 0
+    sudo mkdir -p /usr/share/refind/themes
+    curl -L https://github.com/FT-Labs/phyOS-refind-themes/raw/master/$install.tar.gz | sudo tar xf - -C /usr/share/refind/themes/
+elif [[ ! -z $set ]]; then
+    theme=$(ls /usr/share/refind/themes)
+    chosen=$(gum choose $theme)
+    sudo mkdir -p /boot/efi/EFI/phyos/theme/
+    sudo rm -rf /boot/efi/EFI/phyos/theme/*
+    sudo cp -rf /usr/share/refind/themes/$chosen/* /boot/efi/EFI/phyos/theme/
+    echo "$(chosen) theme set succesfully"
+fi

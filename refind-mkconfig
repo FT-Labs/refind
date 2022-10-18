@@ -2,7 +2,9 @@
 
 source /etc/default/refind || [[ $(echo "Can't find /etc/default/refind, please check again" && exit 1) ]]
 [[ -f /boot/efi/EFI/phyos/refind_x64.efi ]] && BOOT=phyos || BOOT=refind
-[[ -z $ICONS ]] && ICONS="themes/$THEME/icons" || ICONS="icons/icons-$ICONS"
+[[ -z $ICONS ]] && ICONS="icons" || ICONS="icons/icons-$ICONS"
+[[ -z $BIG_ICON_SIZE ]] && BIG_ICON_SIZE=128
+[[ -z $SMALL_ICON_SIZE ]] && SMALL_ICON_SIZE=48
 
 if [[ $CHECK_UCODE = "true" ]]; then
     _ucode=$(ls /boot | grep ucode &> /dev/null)
@@ -110,5 +112,7 @@ if [[ $OS_PROBER = "true" ]]; then
 fi
 echo -e "$main_entry" | sudo tee /boot/efi/EFI/$BOOT/refind_entries.conf
 sudo cp -rf /etc/refind.d/refind.conf /boot/efi/EFI/$BOOT/refind.conf
-[[ $BOOT != "refind" ]] && sudo cp -rf /boot/efi/EFI/refind/themes /boot/efi/EFI/$BOOT &> /dev/null && sudo rm -rf /boot/efi/EFI/refind &>/dev/null
-[[ ! -z "$THEME" ]] && echo "include themes/$THEME/theme.conf" | sudo tee -a /boot/efi/EFI/$BOOT/refind.conf
+[[ ! -z "$THEME" ]] && echo "include theme/theme.conf" | sudo tee -a /boot/efi/EFI/$BOOT/refind.conf
+echo "big_icon_size $BIG_ICON_SIZE" | sudo tee -a /boot/efi/EFI/$BOOT/refind.conf
+echo "small_icon_size $SMALL_ICON_SIZE" | sudo tee -a /boot/efi/EFI/$BOOT/refind.conf
+[[ -f "/boot/efi/EFI/$BOOT/icons/bg.png" ]] && echo "banner icons/bg.png" | sudo tee -a /boot/efi/EFI/$BOOT/refind.conf
