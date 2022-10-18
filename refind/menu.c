@@ -369,7 +369,7 @@ static VOID IdentifyRows(IN SCROLL_STATE *State, IN REFIT_MENU_SCREEN *Screen) {
 // mode and dynamic images.
 static VOID SaveScreen(VOID) {
     EG_PIXEL Black = { 0x0, 0x0, 0x0, 0 };
-   
+
     egClearScreen(&Black);
 
     WaitForInput(0);
@@ -1082,7 +1082,7 @@ static VOID DrawMainMenuEntry(REFIT_MENU_ENTRY *Entry, BOOLEAN selected, UINTN X
         Background = egCropImage(GlobalConfig.ScreenBackground, XPos, YPos,
                                  SelectionImages[Entry->Row]->Width, SelectionImages[Entry->Row]->Height);
         if (Background) {
-            egComposeImage(Background, SelectionImages[Entry->Row], 0, 0);
+            egComposeImage(Background, SelectionImages[Entry->Row], 0, 20);
             BltImageCompositeBadge(Background, Entry->Image, Entry->BadgeImage, XPos, YPos);
             egFreeImage(Background);
         } // if
@@ -1815,7 +1815,7 @@ UINTN RunMainMenu(REFIT_MENU_SCREEN *Screen, CHAR16** DefaultSelection, REFIT_ME
     if (AllowGraphicsMode) {
         Style = GraphicsMenuStyle;
         MainStyle = MainMenuStyle;
-        
+
         PointerEnabled = PointerActive = pdAvailable();
         DrawSelection = !PointerEnabled;
     }
