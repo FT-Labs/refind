@@ -259,7 +259,7 @@ AddNvramEntry() {
          # Name it the way some firmware expects -- see http://mjg59.dreamwidth.org/20187.html
          $Efibootmgr -c -l $EfiEntryFilename -L "Windows Boot Manager" -d $InstallDisk -p $PartNum &> /dev/null
       else
-         $Efibootmgr -c -l $EfiEntryFilename -L "rEFInd Boot Manager" -d $InstallDisk -p $PartNum &> /dev/null
+         $Efibootmgr -c -l $EfiEntryFilename -L "phyOS Boot Manager" -d $InstallDisk -p $PartNum &> /dev/null
       fi
       if [[ $? != 0 ]] ; then
          EfibootmgrProblems=1

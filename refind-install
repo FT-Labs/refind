@@ -372,10 +372,8 @@ CheckForFiles() {
 
    if [[ -d "$RefindDir/icons" ]] ; then
       IconsDir="$RefindDir/icons"
-      BgDir="$RefindDir/backgrounds"
    elif [[ -d "$ThisDir/icons" ]] ; then
       IconsDir="$ThisDir/icons"
-      BgDir="$RefindDir/backgrounds"
    else
       echo "The icons directory is missing! Aborting installation!"
       exit 1
@@ -730,9 +728,6 @@ CopyRefindFiles() {
       echo "Notice: Backed up existing icons directory as icons-backup."
    fi
    if ! cp -r "$IconsDir" "$InstallDir/$TargetDir" ; then
-      Problems=1
-   fi
-   if ! cp -r "$BgDir" "$InstallDir/$TargetDir" ; then
       Problems=1
    fi
    mkdir -p "$InstallDir/$TargetDir/keys"

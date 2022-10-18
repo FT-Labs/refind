@@ -4,14 +4,14 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-  <title>The rEFInd Boot Manager: Revisions</title>
+  <title>The phyOS Boot Manager: Revisions</title>
   <link href="../Styles/styles.css" rel="stylesheet" type="text/css" />
 </head>
 
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <body>
-<h1>The rEFInd Boot Manager:<br />Revisions</h1>
+<h1>The phyOS Boot Manager:<br />Revisions</h1>
 
 <p class="subhead">by Roderick W. Smith, <a
 href="mailto:rodsmith@rodsbooks.com">rodsmith@rodsbooks.com</a></p>
@@ -39,7 +39,7 @@ href="mailto:rodsmith@rodsbooks.com">rodsmith@rodsbooks.com</a></p>
 <input type="hidden" name="no_note" value="0">
 <input type="hidden" name="currency_code" value="USD">
 <input type="hidden" name="amount" value="1.00">
-<input type="hidden" name="item_name" value="rEFInd Boot Manager">
+<input type="hidden" name="item_name" value="phyOS Boot Manager">
 <input type="hidden" name="bn" value="PP-DonationsBF:btn_donate_LG.gif:NonHostedGuest">
 <input type="image" src="donate.png" border="0" name="submit" alt="PayPal - The safer, easier way to pay online!">
 </form>
@@ -53,7 +53,7 @@ href="mailto:rodsmith@rodsbooks.com">rodsmith@rodsbooks.com</a></p>
 <input type="hidden" name="no_note" value="0">
 <input type="hidden" name="currency_code" value="USD">
 <input type="hidden" name="amount" value="2.50">
-<input type="hidden" name="item_name" value="rEFInd Boot Manager">
+<input type="hidden" name="item_name" value="phyOS Boot Manager">
 <input type="hidden" name="bn" value="PP-DonationsBF:btn_donate_LG.gif:NonHostedGuest">
 <input type="image" src="donate.png" border="0" name="submit" alt="PayPal - The safer, easier way to pay online!">
 </form>
@@ -68,7 +68,7 @@ href="mailto:rodsmith@rodsbooks.com">rodsmith@rodsbooks.com</a></p>
 <input type="hidden" name="no_note" value="0">
 <input type="hidden" name="currency_code" value="USD">
 <input type="hidden" name="amount" value="5.00">
-<input type="hidden" name="item_name" value="rEFInd Boot Manager">
+<input type="hidden" name="item_name" value="phyOS Boot Manager">
 <input type="hidden" name="bn" value="PP-DonationsBF:btn_donate_LG.gif:NonHostedGuest">
 <input type="image" src="donate.png" border="0" name="submit" alt="PayPal - The safer, easier way to pay online!">
 </form>
@@ -82,7 +82,7 @@ href="mailto:rodsmith@rodsbooks.com">rodsmith@rodsbooks.com</a></p>
 <input type="hidden" name="no_note" value="0">
 <input type="hidden" name="currency_code" value="USD">
 <input type="hidden" name="amount" value="10.00">
-<input type="hidden" name="item_name" value="rEFInd Boot Manager">
+<input type="hidden" name="item_name" value="phyOS Boot Manager">
 <input type="hidden" name="bn" value="PP-DonationsBF:btn_donate_LG.gif:NonHostedGuest">
 <input type="image" src="donate.png" border="0" name="submit" alt="PayPal - The safer, easier way to pay online!">
 </form>
@@ -96,7 +96,7 @@ href="mailto:rodsmith@rodsbooks.com">rodsmith@rodsbooks.com</a></p>
 <input type="hidden" name="no_note" value="0">
 <input type="hidden" name="currency_code" value="USD">
 <input type="hidden" name="amount" value="20.00">
-<input type="hidden" name="item_name" value="rEFInd Boot Manager">
+<input type="hidden" name="item_name" value="phyOS Boot Manager">
 <input type="hidden" name="bn" value="PP-DonationsBF:btn_donate_LG.gif:NonHostedGuest">
 <input type="image" src="donate.png" border="0" name="submit" alt="PayPal - The safer, easier way to pay online!">
 </form>
@@ -109,7 +109,7 @@ href="mailto:rodsmith@rodsbooks.com">rodsmith@rodsbooks.com</a></p>
 <input type="hidden" name="lc" value="US">
 <input type="hidden" name="no_note" value="0">
 <input type="hidden" name="currency_code" value="USD">
-<input type="hidden" name="item_name" value="rEFInd Boot Manager">
+<input type="hidden" name="item_name" value="phyOS Boot Manager">
 <input type="hidden" name="bn" value="PP-DonationsBF:btn_donate_LG.gif:NonHostedGuest">
 <input type="image" src="donate.png" border="0" name="submit" alt="PayPal - The safer, easier way to pay online!">
 </form>
@@ -960,7 +960,7 @@ href="mailto:rodsmith@rodsbooks.com">rodsmith@rodsbooks.com</a></p>
 
   <li>A Linux <tt>refind-install</tt> bug caused Secure Boot detection to fail in some cases. This has also been fixed.</li>
 
-  <li>The <tt>mvrefind</tt> script could fail to move the Windows boot loader file (<tt>bootmgfw.efi</tt>) under some circumstances. Another bug in the same script caused <tt>mvrefind</tt> to register rEFInd using its default filename (<tt>rEFInd Boot Manager</tt>) rather than the name <tt>Windows Boot Manager</tt> when moving rEFInd to the Windows boot manager's location. Both of these bugs have been squashed.</li>
+  <li>The <tt>mvrefind</tt> script could fail to move the Windows boot loader file (<tt>bootmgfw.efi</tt>) under some circumstances. Another bug in the same script caused <tt>mvrefind</tt> to register rEFInd using its default filename (<tt>phyOS Boot Manager</tt>) rather than the name <tt>Windows Boot Manager</tt> when moving rEFInd to the Windows boot manager's location. Both of these bugs have been squashed.</li>
 
   <li>A long-standing but obscure bug/quirk affects some EFIs, such as that in the HP ProBook 6470b: These EFIs connect useless drivers to partitions with no known filesystems, <i>before</i> rEFInd can load filesystem drivers. The result is that drivers loaded by rEFInd could not read the partitions in question. This version of rEFInd works around this problem.</li>
 

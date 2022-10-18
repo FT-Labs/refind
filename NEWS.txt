@@ -688,7 +688,7 @@
 
 - Fixed bug in mvrefind that caused it to fail to move bootmgfw.efi in
   some situations, and another that caused it to give the resulting NVRAM
-  entry the default rEFInd name of "rEFInd Boot Manager," rather than the
+  entry the default rEFInd name of "phyOS Boot Manager," rather than the
   intended "Windows Boot Manager" (to work around bugs in some EFIs).
 
 - Worked around bug/quirk in some EFIs (in HP ProBook 6470b laptop, at

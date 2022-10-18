@@ -465,7 +465,7 @@ static VOID CreateFallbackCSV(IN EFI_FILE *TargetDir) {
     Status = refit_call5_wrapper(TargetDir->Open, TargetDir, &FilePtr, L"\\EFI\\refind\\BOOT.CSV",
                                  EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE | EFI_FILE_MODE_CREATE, 0);
     if (Status == EFI_SUCCESS) {
-        Contents = PoolPrint(L"%s,rEFInd Boot Manager,,This is the boot entry for rEFInd\n",
+        Contents = PoolPrint(L"%s,phyOS Boot Manager,,This is the boot entry for rEFInd\n",
                              INST_REFIND_NAME);
         if (Contents) {
             FileSize = StrSize(Contents);
@@ -657,7 +657,7 @@ static EFI_STATUS CreateNvramEntry(EFI_HANDLE DeviceHandle) {
 
     ProgName = PoolPrint(L"\\EFI\\refind\\%s", INST_REFIND_NAME);
     Status = ConstructBootEntry(DeviceHandle, ProgName,
-                                L"rEFInd Boot Manager", (CHAR8**) &Entry, &Size);
+                                L"phyOS Boot Manager", (CHAR8**) &Entry, &Size);
     MyFreePool(ProgName);
     if (Status == EFI_SUCCESS)
         BootNum = FindBootNum(Entry, Size, &AlreadyExists);

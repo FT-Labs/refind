@@ -10,7 +10,7 @@ fi
 
 install_to_esp() {
     # Remove any existing NVRAM entry for rEFInd, to avoid creating a duplicate.
-    ExistingEntry=`efibootmgr | grep "rEFInd Boot Manager" | cut -c 5-8`
+    ExistingEntry=`efibootmgr | grep "phyOS Boot Manager" | cut -c 5-8`
     if [[ -n $ExistingEntry ]] ; then
         efibootmgr --bootnum $ExistingEntry --delete-bootnum &> /dev/null
     fi

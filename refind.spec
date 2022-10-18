@@ -128,7 +128,7 @@ cp -a fonts $RPM_BUILD_ROOT/usr/share/refind-%{version}/
 %post
 PATH=$PATH:/usr/local/bin
 # Remove any existing NVRAM entry for rEFInd, to avoid creating a duplicate.
-ExistingEntry=`efibootmgr | grep "rEFInd Boot Manager" | cut -c 5-8`
+ExistingEntry=`efibootmgr | grep "phyOS Boot Manager" | cut -c 5-8`
 if [[ -n $ExistingEntry ]] ; then
    efibootmgr --bootnum $ExistingEntry --delete-bootnum &> /dev/null
 fi
