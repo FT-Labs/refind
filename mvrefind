@@ -221,7 +221,7 @@ PostMoveCleanup() {
 CreateBootCsvFile() {
    IConv="$(command -v iconv 2> /dev/null)"
    if [[ -x "$IConv" && -d "$TargetDir" ]] ; then
-      echo "$Target,rEFInd boot manager,,This is the boot entry for rEFInd" | \
+      echo "$Target,phyOS Boot Manager,,This is the boot entry for rEFInd" | \
            $IConv -t UCS-2 > "$TargetDir/BOOT.CSV"
    fi
 } # CreateBootCsvFile()

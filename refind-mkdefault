@@ -167,7 +167,7 @@ def main():
     parser = ArgumentParser(description=description)
     parser.add_argument("-L", "--label",
                         default="phyos",
-                        help=("The label used to identify rEFInd (default=rEFInd)"))
+                        help=("The label used to identify rEFInd (default=phyos)"))
     args = parser.parse_args()
 
     if sys.platform != "linux":
