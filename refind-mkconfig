@@ -1,11 +1,11 @@
 #!/bin/bash
 
-source /etc/default/refind || exit 1
+source /etc/default/refind || [[ $(echo "Can't find /etc/default/refind, please check again" && exit 1) ]]
 [[ -f /boot/efi/EFI/phyos/refind_x64.efi ]] && BOOT=phyos || BOOT=refind
-[[ -z $ICONS ]] && ICONS="themes/$THEME/icons" || ICONS="icons/$ICONS"
+[[ -z $ICONS ]] && ICONS="themes/$THEME/icons" || ICONS="icons/icons-$ICONS"
 
 if [[ $CHECK_UCODE = "true" ]]; then
-    _ucode=$(ls /boot | grep ucode)
+    _ucode=$(ls /boot | grep ucode &> /dev/null)
     if [[ $_ucode = "amd-ucode.img" ]]; then
         ucode='initrd=\\amd-ucode.img'
     elif [[ $_ucode = "intel-ucode.img" ]]; then
@@ -15,12 +15,12 @@ fi
 
 generate_menuentry() {
     os_icon=$(echo "$1" | tr [:upper:] [:lower:])
-    if [[ ! $(ls /boot | grep $DEFAULT_KERNEL) ]]; then
+    if [[ ! $(ls /boot | grep $DEFAULT_KERNEL &> /dev/null) ]]; then
         echo "$DEFAULT_KERNEL not found in /boot. Automatically setting default kernel..."
         DEFAULT_KERNEL=$(ls /boot | grep "vmlinuz-linux\|vmlinuz-linux-zen\|vmlinuz-linux-hardened\|vmlinuz-linux-lts" | cut -d "-" -f 2- | awk '{print $1}')
     fi
     main_entry="\n${main_entry}menuentry \"$1\" {\n"
-    [[ ! -z $THEME ]] && main_entry="$main_entry\ticon /EFI/$BOOT/$ICONS/os_$os_icon.png \n"
+    [[ ! -z $THEME ]] && [[ -f /boot/efi/EFI/$BOOT/$ICONS/os_$os_icon.png ]] && main_entry+="\ticon /EFI/$BOOT/$ICONS/os_$os_icon.png \n"
     main_entry+="\tvolume $2\n"
     main_entry+="\tostype Linux\n"
     main_entry+="\tloader /vmlinuz-$DEFAULT_KERNEL\n"
@@ -42,7 +42,7 @@ generate_submenuentry() {
 generate_osprober() {
     os_icon=$(echo "$1" | tr [:upper:] [:lower:])
     main_entry="\n${main_entry}menuentry \"$1\" {\n"
-    [[ ! -z $THEME ]] && main_entry="$main_entry\ticon /EFI/$BOOT/$ICONS/os_$os_icon.png \n"
+    [[ ! -z $THEME ]] && [[ -f /boot/efi/EFI/$BOOT/$ICONS/os_$os_icon.png ]] && main_entry+="\ticon /EFI/$BOOT/$ICONS/os_$os_icon.png \n"
     case "$1" in
         "Windows")
             loader=$(echo "$2" | cut -d "/" -f 4-)
@@ -110,5 +110,5 @@ if [[ $OS_PROBER = "true" ]]; then
 fi
 echo -e "$main_entry" | sudo tee /boot/efi/EFI/$BOOT/refind_entries.conf
 sudo cp -rf /etc/refind.d/refind.conf /boot/efi/EFI/$BOOT/refind.conf
-[[ $BOOT != "refind" ]] && sudo cp -rf /boot/efi/EFI/refind/themes /boot/efi/EFI/$BOOT && sudo rm -rf /boot/efi/EFI/refind
+[[ $BOOT != "refind" ]] && sudo cp -rf /boot/efi/EFI/refind/themes /boot/efi/EFI/$BOOT &> /dev/null && sudo rm -rf /boot/efi/EFI/refind &>/dev/null
 [[ ! -z "$THEME" ]] && echo "include themes/$THEME/theme.conf" | sudo tee -a /boot/efi/EFI/$BOOT/refind.conf
