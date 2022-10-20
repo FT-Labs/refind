@@ -15,9 +15,9 @@ fi
 
 generate_menuentry() {
     os_icon=$(echo "$1" | tr [:upper:] [:lower:])
-    if [[ ! $(ls /boot | grep $DEFAULT_KERNEL &> /dev/null) ]]; then
+    if [[ ! $(ls /boot | grep $DEFAULT_KERNEL) ]]; then
         echo "$DEFAULT_KERNEL not found in /boot. Automatically setting default kernel..."
-        DEFAULT_KERNEL=$(ls /boot | grep "vmlinuz-linux\|vmlinuz-linux-zen\|vmlinuz-linux-hardened\|vmlinuz-linux-lts" | cut -d "-" -f 2- | awk '{print $1}')
+        DEFAULT_KERNEL=$(ls /boot | grep "vmlinuz-linux\|vmlinuz-linux-zen\|vmlinuz-linux-hardened\|vmlinuz-linux-lts" | cut -d "-" -f 2- | awk 'IF NR==1 {print $1}')
     fi
     main_entry="\n${main_entry}menuentry \"$1\" {\n"
     [[ -f /boot/efi/EFI/$BOOT/$ICONS/os_$os_icon.png ]] && main_entry+="\ticon /EFI/$BOOT/$ICONS/os_$os_icon.png \n"
