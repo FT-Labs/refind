@@ -1,9 +1,9 @@
 #!/bin/bash
 
 opts=$(cat <<EOF
-install=action=store_true
-set=action=store_true
-background=type=str
+install=action=store_true=help=Install themes from internet (github)
+set=action=store_true=help=Set theme from installed themes
+background=type=str=Give a png image to set as background
 
 EOF
 )
@@ -25,5 +25,11 @@ elif [[ ! -z $set ]]; then
     sudo mkdir -p /boot/efi/EFI/phyos/theme/
     sudo rm -rf /boot/efi/EFI/phyos/theme/*
     sudo cp -rf /usr/share/refind/themes/$chosen/* /boot/efi/EFI/phyos/theme/
-    echo "$(chosen) theme set succesfully"
+    echo "$chosen theme set succesfully"
+fi
+
+if [[ ! -z $background ]]; then
+    [[ $(echo "$background" | tr "." " " | awk '{print $NF}') != "png" ]] && echo "Please use a .png image... Aborting" && exit
+    sudo cp -f "$background" /boot/efi/EFI/phyos/icons/bg.png
+    sudo refind-mkconfig
 fi

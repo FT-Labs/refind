@@ -514,12 +514,12 @@ VOID BltImageAlpha(IN EG_IMAGE *Image, IN UINTN XPos, IN UINTN YPos, IN EG_PIXEL
 // {
 //     UINTN TotalWidth, TotalHeight, CompWidth, CompHeight, OffsetX, OffsetY;
 //     EG_IMAGE *CompImage;
-//     
+//
 //     // initialize buffer with base image
 //     CompImage = egCopyImage(BaseImage);
 //     TotalWidth  = BaseImage->Width;
 //     TotalHeight = BaseImage->Height;
-//     
+//
 //     // place the top image
 //     CompWidth = TopImage->Width;
 //     if (CompWidth > TotalWidth)
@@ -571,6 +571,60 @@ VOID BltImageCompositeBadge(IN EG_IMAGE *BaseImage,
          OffsetX += CompWidth  - 8 - BadgeImage->Width;
          OffsetY += CompHeight - 8 - BadgeImage->Height;
          egComposeImage(CompImage, BadgeImage, OffsetX, OffsetY);
+     }
+
+     // blit to screen and clean up
+     if (CompImage != NULL) {
+         if (CompImage->HasAlpha)
+             egDrawImageWithTransparency(CompImage, NULL, XPos, YPos, CompImage->Width, CompImage->Height);
+         else
+             egDrawImage(CompImage, XPos, YPos);
+         egFreeImage(CompImage);
+         GraphicsScreenDirty = TRUE;
+     }
+}
+
+VOID BltImageCompositeIndicator(IN EG_IMAGE *BaseImage,
+                            IN EG_IMAGE *TopImage,
+                            IN EG_IMAGE *IndicatorImage,
+                            IN UINTN XPos,
+                            IN UINTN YPos,
+                            BOOLEAN DIR)
+{
+     UINTN TotalWidth = 0, TotalHeight = 0, CompWidth = 0, CompHeight = 0, OffsetX = 0, OffsetY = 0;
+     EG_IMAGE *CompImage = NULL;
+
+     // initialize buffer with base image
+     if (BaseImage != NULL) {
+         CompImage = egCopyImage(BaseImage);
+         TotalWidth  = BaseImage->Width;
+         TotalHeight = BaseImage->Height - IndicatorImage->Height;
+     }
+
+     // place the top image
+     if ((TopImage != NULL) && (CompImage != NULL)) {
+         CompWidth = TopImage->Width;
+         if (CompWidth > TotalWidth)
+               CompWidth = TotalWidth;
+         OffsetX = (TotalWidth - CompWidth) >> 1;
+         CompHeight = TopImage->Height - IndicatorImage->Height;
+         if (CompHeight > TotalHeight)
+               CompHeight = TotalHeight;
+         OffsetY = (TotalHeight - CompHeight) >> 1;
+         // if (DIR)
+         //     egComposeImage(CompImage, TopImage, OffsetX, OffsetY + IndicatorImage->Height);
+         // else
+             egComposeImage(CompImage, TopImage, OffsetX, OffsetY);
+     }
+
+     // place the badge image
+     if (IndicatorImage != NULL && CompImage != NULL &&  (IndicatorImage->Height) < CompHeight) {
+         OffsetX += CompWidth / 2 - IndicatorImage->Width / 2;
+         if (DIR)
+             OffsetY = 0;
+         else
+             OffsetY = BaseImage->Height - IndicatorImage->Height;
+         egComposeImage(CompImage, IndicatorImage, OffsetX, OffsetY);
      }
 
      // blit to screen and clean up

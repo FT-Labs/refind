@@ -364,6 +364,10 @@ typedef struct {
    CHAR16           *ConfigFilename;
    CHAR16           *SelectionSmallFileName;
    CHAR16           *SelectionBigFileName;
+   CHAR16           *IndicatorBigBottomFileName;
+   CHAR16           *IndicatorSmallBottomFileName;
+   CHAR16           *IndicatorBigTopFileName;
+   CHAR16           *IndicatorSmallTopFileName;
    CHAR16           *DefaultSelection;
    CHAR16           *AlsoScan;
    CHAR16           *DontScanVolumes;

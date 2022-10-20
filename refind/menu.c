@@ -94,9 +94,12 @@ static UINTN TileSizes[2] = { 144, 64 };
 #define TITLEICON_SPACING (16)
 
 #define TILE_XSPACING (8)
-#define TILE_YSPACING (16)
+#define TILE_YSPACING (24)
 
 static EG_IMAGE *SelectionImages[2] = { NULL, NULL };
+static EG_IMAGE *IndicatorImages[2] = { NULL, NULL };
+BOOLEAN INDICATOR_BIG_DIR = 0;
+BOOLEAN INDICATOR_SMALL_DIR = 0;
 static EG_PIXEL SelectionBackgroundPixel = { 0xff, 0xff, 0xff, 0 };
 
 EFI_EVENT* WaitList = NULL;
@@ -155,6 +158,49 @@ static VOID InitSelection(VOID)
     if (TempBigImage)
         egFreeImage(TempBigImage);
 } // VOID InitSelection()
+
+static VOID InitIndicator(VOID)
+{
+    EG_IMAGE *TempBigIndicator = NULL, *TempSmallIndicator = NULL;
+
+    if (!AllowGraphicsMode)
+        return;
+    if (IndicatorImages[0] != NULL)
+        return;
+
+    // load big selection image
+    if (GlobalConfig.IndicatorBigTopFileName != NULL) {
+        TempBigIndicator = egLoadImage(SelfDir, GlobalConfig.IndicatorBigTopFileName, TRUE);
+    }
+
+    if (TempBigIndicator == NULL && GlobalConfig.IndicatorBigBottomFileName != NULL) {
+        TempBigIndicator = egLoadImage(SelfDir, GlobalConfig.IndicatorBigBottomFileName, TRUE);
+        INDICATOR_BIG_DIR = 1;
+    }
+
+    if (TempBigIndicator != NULL) {
+        IndicatorImages[0] = egScaleImage(TempBigIndicator, GlobalConfig.IconSizes[ICON_SIZE_BADGE], GlobalConfig.IconSizes[ICON_SIZE_BADGE]);
+    }
+
+    if (GlobalConfig.IndicatorSmallTopFileName != NULL) {
+        TempSmallIndicator = egLoadImage(SelfDir, GlobalConfig.IndicatorSmallTopFileName, TRUE);
+    }
+
+    if (TempSmallIndicator == NULL && GlobalConfig.IndicatorSmallBottomFileName != NULL) {
+        TempSmallIndicator= egLoadImage(SelfDir, GlobalConfig.IndicatorSmallBottomFileName, TRUE);
+        INDICATOR_SMALL_DIR = 1;
+    }
+
+    if (TempSmallIndicator != NULL) {
+        IndicatorImages[1] = egScaleImage(TempSmallIndicator, GlobalConfig.IconSizes[ICON_SIZE_BADGE] / 2, GlobalConfig.IconSizes[ICON_SIZE_BADGE] / 2);
+    }
+
+    if (TempSmallIndicator)
+        egFreeImage(TempSmallIndicator);
+    if (TempBigIndicator)
+        egFreeImage(TempBigIndicator);
+} // VOID InitSelection()
+
 
 //
 // Scrolling functions
@@ -1069,6 +1115,13 @@ VOID GraphicsMenuStyle(IN REFIT_MENU_SCREEN *Screen,
     }
 } // static VOID GraphicsMenuStyle()
 
+// Fetches the image specified by ExternalFilename if it's available, or BuiltInImage if it's not.
+static EG_IMAGE * GetIcon(IN EG_EMBEDDED_IMAGE *BuiltInIcon, IN CHAR16 *ExternalFilename){
+    EG_IMAGE * Icon = egFindIcon(ExternalFilename, GlobalConfig.IconSizes[ICON_SIZE_SMALL]);
+    if(Icon != NULL) return Icon;
+    return egPrepareEmbeddedImage(BuiltInIcon, TRUE);
+}
+
 //
 // graphical main menu style
 //
@@ -1079,16 +1132,25 @@ static VOID DrawMainMenuEntry(REFIT_MENU_ENTRY *Entry, BOOLEAN selected, UINTN X
 
     // if using pointer, don't draw selection image when not hovering
     if (selected && DrawSelection) {
-        Background = egCropImage(GlobalConfig.ScreenBackground, XPos, YPos,
-                                 SelectionImages[Entry->Row]->Width, SelectionImages[Entry->Row]->Height);
+        if (IndicatorImages[0] != NULL) {
+            Background = egCropImage(GlobalConfig.ScreenBackground, XPos, YPos,
+                                     SelectionImages[Entry->Row]->Width, SelectionImages[Entry->Row]->Height + IndicatorImages[IndicatorImages[1] ? Entry->Row : 0]->Height + TILE_YSPACING / 2);
+        } else {
+            Background = egCropImage(GlobalConfig.ScreenBackground, XPos, YPos,
+                                     SelectionImages[Entry->Row]->Width, SelectionImages[Entry->Row]->Height);
+        }
         if (Background) {
-            egComposeImage(Background, SelectionImages[Entry->Row], 0, 20);
-            BltImageCompositeBadge(Background, Entry->Image, Entry->BadgeImage, XPos, YPos);
+            egComposeImage(Background, SelectionImages[Entry->Row], 0, IndicatorImages[0] ? (IndicatorImages[1] ? IndicatorImages[Entry->Row]->Height / 2 : IndicatorImages[0]->Height / 2) + TILE_YSPACING / 4 : 0);
+            if (IndicatorImages[0] != NULL) {
+                BltImageCompositeIndicator(Background, Entry->Image, IndicatorImages[IndicatorImages[1] ? Entry->Row : 0], XPos, YPos, IndicatorImages[Entry->Row] ? (IndicatorImages[Entry->Row]->Height < GlobalConfig.IconSizes[ICON_SIZE_BADGE] ? INDICATOR_BIG_DIR : INDICATOR_SMALL_DIR) : 0);
+            } else {
+                BltImageCompositeBadge(Background, Entry->Image, Entry->BadgeImage, XPos, YPos);
+            }
             egFreeImage(Background);
         } // if
     } else { // Image not selected; copy background
         egDrawImageWithTransparency(Entry->Image, Entry->BadgeImage, XPos, YPos,
-                                    SelectionImages[Entry->Row]->Width, SelectionImages[Entry->Row]->Height);
+                                    SelectionImages[Entry->Row]->Width, SelectionImages[Entry->Row]->Height + (IndicatorImages[0] ? (IndicatorImages[1] ? IndicatorImages[Entry->Row]->Height : IndicatorImages[0]->Height) + TILE_YSPACING / 2 : 0));
     } // if/else
 } // VOID DrawMainMenuEntry()
 
@@ -1166,12 +1228,6 @@ static VOID PaintSelection(IN REFIT_MENU_SCREEN *Screen, IN SCROLL_STATE *State,
     }
 } // static VOID MoveSelection(VOID)
 
-// Fetches the image specified by ExternalFilename if it's available, or BuiltInImage if it's not.
-static EG_IMAGE * GetIcon(IN EG_EMBEDDED_IMAGE *BuiltInIcon, IN CHAR16 *ExternalFilename){
-    EG_IMAGE * Icon = egFindIcon(ExternalFilename, GlobalConfig.IconSizes[ICON_SIZE_SMALL]);
-    if(Icon != NULL) return Icon;
-    return egPrepareEmbeddedImage(BuiltInIcon, TRUE);
-}
 
 UINTN ComputeRow0PosY(VOID) {
     return ((UGAHeight / 2) - TileSizes[0] / 2);
@@ -1193,7 +1249,7 @@ static VOID PaintArrow(EG_IMAGE * Arrow, UINTN PosX, UINTN PosY, BOOLEAN visible
 // Display (or erase) the arrow icons to the left and right of an icon's row,
 // as appropriate.
 static VOID PaintArrows(SCROLL_STATE *State, UINTN PosX, UINTN PosY, UINTN row0Loaders) {
-    BOOLEAN HideFlagArrows = GlobalConfig.HideUIFlags & HIDEUI_FLAG_ARROWS;
+    BOOLEAN HideFlagArrows = 0; //GlobalConfig.HideUIFlags & HIDEUI_FLAG_ARROWS;
     if(!HideFlagArrows){
 
         EG_IMAGE * LeftArrow = GetIcon(&egemb_arrow_left, L"arrow_left");
@@ -1228,6 +1284,7 @@ VOID MainMenuStyle(IN REFIT_MENU_SCREEN *Screen, IN SCROLL_STATE *State,
 
         case MENU_FUNCTION_INIT:
             InitScroll(State, Screen->EntryCount, GlobalConfig.MaxTags);
+            InitIndicator();
 
             // layout
             row0Count = 0;
@@ -1246,6 +1303,9 @@ VOID MainMenuStyle(IN REFIT_MENU_SCREEN *Screen, IN SCROLL_STATE *State,
             row0PosY = ComputeRow0PosY();
             row1PosX = (UGAWidth + TILE_XSPACING - (TileSizes[1] + TILE_XSPACING) * row1Count) >> 1;
             row1PosY = row0PosY + TileSizes[0] + TILE_YSPACING;
+            if (IndicatorImages[0] != NULL)
+                row1PosY += GlobalConfig.IconSizes[ICON_SIZE_BADGE];
+
             if (row1Count > 0)
                 textPosY = row1PosY + TileSizes[1] + TILE_YSPACING;
             else
@@ -1279,6 +1339,7 @@ VOID MainMenuStyle(IN REFIT_MENU_SCREEN *Screen, IN SCROLL_STATE *State,
 
         case MENU_FUNCTION_PAINT_SELECTION:
             PaintSelection(Screen, State, itemPosX, row0PosY, row1PosY, textPosY);
+            PaintArrows(State, row0PosX - TILE_XSPACING, row0PosY + (TileSizes[0] / 2), row0Loaders);
             break;
 
         case MENU_FUNCTION_PAINT_TIMEOUT:
@@ -1316,7 +1377,7 @@ UINTN FindMainMenuItem(IN REFIT_MENU_SCREEN *Screen, IN SCROLL_STATE *State, IN 
     row0PosX = (UGAWidth + TILE_XSPACING - (TileSizes[0] + TILE_XSPACING) * row0Count) >> 1;
     row0PosY = ComputeRow0PosY();
     row1PosX = (UGAWidth + TILE_XSPACING - (TileSizes[1] + TILE_XSPACING) * row1Count) >> 1;
-    row1PosY = row0PosY + TileSizes[0] + TILE_YSPACING;
+    row1PosY = row0PosY + TileSizes[0] + TILE_YSPACING - 8;
 
     if (PosY >= row0PosY && PosY <= row0PosY + TileSizes[0]) {
         itemRow = 0;
