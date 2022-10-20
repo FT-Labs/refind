@@ -5,7 +5,7 @@ source /etc/default/refind || [[ $(echo "Can't find /etc/default/refind, please 
 [[ -z $ICONS ]] && ICONS="icons" || ICONS="icons/icons-$ICONS"
 
 if [[ $CHECK_UCODE = "true" ]]; then
-    _ucode=$(ls /boot | grep ucode &> /dev/null)
+    _ucode=$(ls /boot | grep ucode 2>/dev/null)
     if [[ $_ucode = "amd-ucode.img" ]]; then
         ucode='initrd=\\amd-ucode.img'
     elif [[ $_ucode = "intel-ucode.img" ]]; then
@@ -15,7 +15,7 @@ fi
 
 generate_menuentry() {
     os_icon=$(echo "$1" | tr [:upper:] [:lower:])
-    if [[ ! $(ls /boot | grep $DEFAULT_KERNEL) ]]; then
+    if [[ ! $(ls /boot | grep $DEFAULT_KERNEL 2>/dev/null) ]]; then
         echo "$DEFAULT_KERNEL not found in /boot. Automatically setting default kernel..."
         DEFAULT_KERNEL=$(ls /boot | grep "vmlinuz-linux\|vmlinuz-linux-zen\|vmlinuz-linux-hardened\|vmlinuz-linux-lts" | cut -d "-" -f 2- | awk 'IF NR==1 {print $1}')
     fi
