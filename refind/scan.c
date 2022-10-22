@@ -1388,6 +1388,13 @@ VOID ScanForBootloaders(BOOLEAN ShowMessage) {
         } // switch()
     } // for
 
+    if (MainMenu.EntryCount < 1) {
+        ScanVolumes();
+        ScanInternal();
+        ScanExternal();
+        ScanOptical();
+    }
+
     // Restore the backed-up GlobalConfig.DontScan* variables....
     MyFreePool(GlobalConfig.DontScanFiles);
     GlobalConfig.DontScanFiles = OrigDontScanFiles;

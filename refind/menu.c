@@ -1142,7 +1142,7 @@ static VOID DrawMainMenuEntry(REFIT_MENU_ENTRY *Entry, BOOLEAN selected, UINTN X
         if (Background) {
             egComposeImage(Background, SelectionImages[Entry->Row], 0, IndicatorImages[0] ? (IndicatorImages[1] ? IndicatorImages[Entry->Row]->Height / 2 : IndicatorImages[0]->Height / 2) + TILE_YSPACING / 4 : 0);
             if (IndicatorImages[0] != NULL) {
-                BltImageCompositeIndicator(Background, Entry->Image, IndicatorImages[IndicatorImages[1] ? Entry->Row : 0], XPos, YPos, IndicatorImages[Entry->Row] ? (IndicatorImages[Entry->Row]->Height < GlobalConfig.IconSizes[ICON_SIZE_BADGE] ? INDICATOR_BIG_DIR : INDICATOR_SMALL_DIR) : 0);
+                BltImageCompositeIndicator(Background, Entry->Image, IndicatorImages[IndicatorImages[1] ? Entry->Row : 0], XPos, YPos, IndicatorImages[Entry->Row] ? (IndicatorImages[Entry->Row]->Height < GlobalConfig.IconSizes[ICON_SIZE_BADGE] ? INDICATOR_BIG_DIR : INDICATOR_SMALL_DIR) : INDICATOR_BIG_DIR);
             } else {
                 BltImageCompositeBadge(Background, Entry->Image, Entry->BadgeImage, XPos, YPos);
             }

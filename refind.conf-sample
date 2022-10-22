@@ -435,7 +435,7 @@ scanfor manual
 # causes kernels without ".efi" extensions to NOT be scanned.
 # Default is "true" -- to scan for kernels without ".efi" extensions.
 #
-scan_all_linux_kernels false
+# scan_all_linux_kernels false
 
 # Combine all Linux kernels in a given directory into a single entry.
 # When so set, the kernel with the most recent time stamp will be launched

@@ -2,7 +2,54 @@
 
 source /etc/default/refind || [[ $(echo "Can't find /etc/default/refind, please check again" && exit 1) ]]
 [[ -f /boot/efi/EFI/phyos/refind_x64.efi ]] && BOOT=phyos || BOOT=refind
+refind_cfg="/boot/efi/EFI/$BOOT/refind.conf"
 [[ -z $ICONS ]] && ICONS="icons" || ICONS="icons/icons-$ICONS"
+
+usage () {
+    printf "Usage: %s [OPTION]\n"
+    printf "Generate refind_entries.conf file"; echo
+    echo
+    echo '-o, --output=DEST'
+    printf "\toutput generated config to FILE [default=/boot/efi/EFI/[phyos-refind]/refind_entries.conf]\n"
+    echo '-h, --help'
+    printf "\tprint this message and exit"
+    echo
+    printf "Report bugs to <arda@phyos.su>."; echo
+}
+
+argument () {
+  opt=$1
+  shift
+
+  if test $# -eq 0; then
+      gettext_printf "%s: option requires an argument -- \`%s'\n" "$self" "$opt" 1>&2
+      exit 1
+  fi
+  echo $1
+}
+
+# Check the arguments.
+while test $# -gt 0
+do
+    option=$1
+    shift
+
+    case "$option" in
+    -h | --help)
+	usage
+	exit 0 ;;
+    -o | --output)
+	refind_cfg=`argument $option "$@"`; shift;;
+    --output=*)
+	refind_cfg=`echo "$option" | sed 's/--output=//'`
+	;;
+    -*)
+	gettext_printf "Unrecognized option \`%s'\n" "$option" 1>&2
+	usage
+	exit 1
+	;;
+    esac
+done
 
 if [[ $CHECK_UCODE = "true" ]]; then
     _ucode=$(ls /boot | grep ucode 2>/dev/null)
