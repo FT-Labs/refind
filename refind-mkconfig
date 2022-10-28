@@ -49,7 +49,7 @@ done
 ESP=$(cat /etc/fstab | sed '/\#/d' | grep "/boot/efi")
 if [[ -z $ESP ]]; then
     echo "phyOS rEFInd efi support detected, calling EFI file maker..."
-    sudo ./refind-mkconfig-efi $@
+    sudo refind-mkconfig-efi $@
     exit $?
 fi
 ESP=/boot/efi
@@ -76,7 +76,7 @@ generate_menuentry() {
         DEFAULT_KERNEL=$(ls /boot | grep "vmlinuz-linux\|vmlinuz-linux-zen\|vmlinuz-linux-hardened\|vmlinuz-linux-lts" | cut -d "-" -f 2- | awk 'IF NR==1 {print $1}')
     fi
     main_entry="\n${main_entry}menuentry \"$1\" {\n"
-    [[ -f /boot/efi/EFI/$BOOT/$ICONS/os_$os_icon.png ]] && main_entry+="\ticon /EFI/$BOOT/$ICONS/os_$os_icon.png \n"
+#    [[ -f /boot/efi/EFI/$BOOT/$ICONS/os_$os_icon.png ]] && main_entry+="\ticon /EFI/$BOOT/$ICONS/os_$os_icon.png \n"
     main_entry+="\tvolume $2\n"
     main_entry+="\tostype Linux\n"
     main_entry+="\tloader /vmlinuz-$DEFAULT_KERNEL\n"
