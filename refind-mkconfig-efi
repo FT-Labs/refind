@@ -1,0 +1,141 @@
+#!/bin/bash
+
+source /etc/default/refind || [[ $(echo "Can't find /etc/default/refind, please check again" && exit 1) ]]
+ESP=$(cat /etc/fstab | awk '{print $1}' | grep "EFI" | sed 's|EFI.*||g')
+BOOT="EFI/refind"
+[[ -z $ICONS ]] && ICONS="icons" || ICONS="icons/icons-$ICONS"
+
+usage () {
+    printf "Usage: %s [OPTION]\n"
+    printf "Generate refind_entries.conf file"; echo
+    echo
+    echo '-o, --output=DEST'
+    printf "\toutput generated config to FILE [default=/boot/efi/EFI/[phyos-refind]/refind_entries.conf]\n"
+    echo '-h, --help'
+    printf "\tprint this message and exit"
+    echo
+    printf "Report bugs to <arda@phyos.su>."; echo
+}
+
+argument () {
+  opt=$1
+  shift
+
+  if test $# -eq 0; then
+      gettext_printf "%s: option requires an argument -- \`%s'\n" "$self" "$opt" 1>&2
+      exit 1
+  fi
+  echo $1
+}
+
+# Check the arguments.
+while test $# -gt 0
+do
+    option=$1
+    shift
+
+    case "$option" in
+    -h | --help)
+	usage
+	exit 0 ;;
+    -o | --output)
+	ESP=`argument $option "$@"`; shift;;
+    --output=*)
+	ESP=`echo "$option" | sed 's/--output=//'`
+	;;
+    -*)
+	gettext_printf "Unrecognized option \`%s'\n" "$option" 1>&2
+	usage
+	exit 1
+	;;
+    esac
+done
+
+if [[ $CHECK_UCODE = "true" ]]; then
+    _ucode=$(ls /boot | grep ucode 2>/dev/null)
+    if [[ $_ucode = "amd-ucode.img" ]]; then
+        ucode='initrd=\\amd-ucode.img'
+    elif [[ $_ucode = "intel-ucode.img" ]]; then
+        ucode='initrd=\\intel-ucode.img'
+    fi
+fi
+
+generate_menuentry() {
+    os_icon=$(echo "$1" | tr [:upper:] [:lower:])
+    if [[ ! $(ls /boot | grep $DEFAULT_KERNEL 2>/dev/null) ]]; then
+        echo "$DEFAULT_KERNEL not found in /boot. Automatically setting default kernel..."
+        DEFAULT_KERNEL=$(ls /boot | grep "vmlinuz-linux\|vmlinuz-linux-zen\|vmlinuz-linux-hardened\|vmlinuz-linux-lts" | cut -d "-" -f 2- | awk 'IF NR==1 {print $1}')
+    fi
+    main_entry="\n${main_entry}menuentry \"$1\" {\n"
+    [[ -f $ESP/$BOOT/$ICONS/os_$os_icon.png ]] && main_entry+="\ticon $BOOT/$ICONS/os_$os_icon.png \n"
+    [[ -n $volume ]] && main_entry+="\tvolume $2\n"
+    main_entry+="\tostype Linux\n"
+    main_entry+="\tloader EFI/$os_icon/vmlinuz-$DEFAULT_KERNEL\n"
+    main_entry+="\tinitrd EFI/$os_icon/initramfs-$DEFAULT_KERNEL.img\n"
+    main_entry+="\toptions \"root=$root $REFIND_CMDLINE_LINUX $REFIND_CMDLINE_LINUX_DEFAULT $ucode\"\n"
+    main_entry+="\tsubmenuentry \"Boot using safe graphics\" {\n"
+    main_entry+="\t\tinitrd /initramfs-$DEFAULT_KERNEL-safegraphics.img\n"
+    main_entry+="\t\toptions \"root=$root rw add_efi_memmap $REFIND_CMDLINE_LINUX_DEFAULT\"\n\t}\n"
+}
+
+generate_submenuentry() {
+    sub_entry+="\tsubmenuentry \"$1\" {\n"
+    sub_entry+="\t  loader $BOOT/vmlinuz-$1\n"
+    sub_entry+="\t  initrd $BOOT/initramfs-$1.img\n"
+    sub_entry+="\t  options \"root=$root rw add_efi_memmap $REFIND_CMDLINE_LINUX $REFIND_CMDLINE_LINUX_DEFAULT $ucode\" \n\t}"
+    printf "%s" "$sub_entry\n"
+}
+
+generate_otheros() {
+    os_icon=$(echo "$1" | tr [:upper:] [:lower:])
+    main_entry="\n${main_entry}menuentry \"$1\" {\n"
+    [[ -f $ESP/$BOOT/$ICONS/os_$os_icon.png ]] && main_entry+="\ticon $BOOT/$ICONS/os_$os_icon.png \n"
+    INITRD="$2"
+    main_entry+="\tostype Linux\n"
+    main_entry+="\tloader EFI/$1/$2\n"
+    main_entry+="\tinitrd EFI/$1/$3\n"
+    main_entry+="\toptions \"root=$4 $REFIND_CMDLINE_LINUX $REFIND_CMDLINE_LINUX_DEFAULT $ucode\"\n"
+    if [[ ! -z $5 ]]; then
+        for initrd in $5; do
+            main_entry+="\tsubmenuentry \"$os $initrd \" {\n"
+            main_entry+="\t\tinitrd /$initrd \n\t}\n"
+        done
+    fi
+    main_entry+="}\n"
+}
+
+dev=$(mount | grep "/boot " | awk '{print $1}')
+root=$(mount | grep -w '/' | awk '{print $1}' | rev | cut -d '/' -f 1 | rev)
+is_lvm=$(sudo lvs -o lv_name | awk '{if(NR>1)print}' | tr -d " " | while read lv; do findmnt -l | grep '/dev/\S\+' | awk '{print $2}' | grep $lv; done)
+
+[[ ! -z $is_lvm ]] && root="/dev/mapper/$root" || root="/dev/$root"
+
+generate_menuentry "$OS_DISTRIBUTOR"
+sub=$(ls /boot | grep "vmlinuz" | cut -d "-" -f 2- | while read k; do
+    [[ $k != $DEFAULT_KERNEL ]] && generate_submenuentry $k
+done)
+main_entry="$main_entry$sub}\n"
+
+oses=$(ls /efiboot/EFI | grep -v "refind\|tools\|phyos")
+_osprober=$(sudo os-prober)
+
+for os in $oses; do
+    kernels=$(ls /efiboot/EFI/$os | grep "vmlinuz" | cut -d "-" -f 2-)
+    for kern in $kernels; do
+        loader="vmlinuz-$kern"
+        tmp=$(ls /efiboot/EFI/$os | grep "initramfs" | grep -w $kern || ls /efiboot/EFI/$os | grep "initrd" | grep "$kern")
+        main_ent=$(echo $tmp | awk '{print $1}')
+        sub_ent=$(echo $tmp | awk '{$1=""; print $0}')
+        root=$(echo "$_osprober" | grep -i "$os" | cut -d ":" -f 1)
+        generate_otheros "$os" "$loader" "$main_ent" "$root" "$sub_ent"
+    done
+done
+
+
+BOOT="$ESP/$BOOT"
+echo -e "$main_entry" | sudo tee $BOOT/refind_entries.conf
+sudo cp -rf /etc/refind.d/refind.conf $BOOT/refind.conf
+echo "include theme/theme.conf" | sudo tee -a $BOOT/refind.conf
+[[ ! -z $BIG_ICON_SIZE ]] && echo "big_icon_size $BIG_ICON_SIZE" | sudo tee -a $BOOT/refind.conf
+[[ ! -z $SMALL_ICON_SIZE ]] && echo "small_icon_size $SMALL_ICON_SIZE" | sudo tee -a $BOOT/refind.conf
+[[ -f "$BOOT/icons/bg.png" ]] && echo "banner icons/bg.png" | sudo tee -a $BOOT/refind.conf

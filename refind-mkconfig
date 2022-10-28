@@ -1,16 +1,11 @@
 #!/bin/bash
 
-source /etc/default/refind || [[ $(echo "Can't find /etc/default/refind, please check again" && exit 1) ]]
-[[ -f /boot/efi/EFI/phyos/refind_x64.efi ]] && BOOT=phyos || BOOT=refind
-refind_cfg="/boot/efi/EFI/$BOOT/refind.conf"
-[[ -z $ICONS ]] && ICONS="icons" || ICONS="icons/icons-$ICONS"
-
 usage () {
     printf "Usage: %s [OPTION]\n"
     printf "Generate refind_entries.conf file"; echo
     echo
     echo '-o, --output=DEST'
-    printf "\toutput generated config to FILE [default=/boot/efi/EFI/[phyos-refind]/refind_entries.conf]\n"
+    printf "\toutput generated config to FILE [default=/boot/efi/EFI/[refind]/refind_entries.conf]\n"
     echo '-h, --help'
     printf "\tprint this message and exit"
     echo
@@ -39,9 +34,9 @@ do
 	usage
 	exit 0 ;;
     -o | --output)
-	refind_cfg=`argument $option "$@"`; shift;;
+	ESP=`argument $option "$@"`; shift;;
     --output=*)
-	refind_cfg=`echo "$option" | sed 's/--output=//'`
+	ESP=`echo "$option" | sed 's/--output=//'`
 	;;
     -*)
 	gettext_printf "Unrecognized option \`%s'\n" "$option" 1>&2
@@ -50,6 +45,20 @@ do
 	;;
     esac
 done
+
+ESP=$(cat /etc/fstab | sed '/\#/d' | grep "/boot/efi")
+if [[ -z $ESP ]]; then
+    echo "phyOS rEFInd efi support detected, calling EFI file maker..."
+    sudo ./refind-mkconfig-efi $@
+    exit $?
+fi
+ESP=/boot/efi
+
+source /etc/default/refind || [[ $(echo "Can't find /etc/default/refind, please check again" && exit 1) ]]
+BOOT=refind
+refind_cfg="/boot/efi/EFI/$BOOT/refind.conf"
+[[ -z $ICONS ]] && ICONS="icons" || ICONS="icons/icons-$ICONS"
+
 
 if [[ $CHECK_UCODE = "true" ]]; then
     _ucode=$(ls /boot | grep ucode 2>/dev/null)
@@ -155,9 +164,10 @@ if [[ $OS_PROBER = "true" ]]; then
         generate_osprober $os_name $os_root
     done
 fi
-echo -e "$main_entry" | sudo tee /boot/efi/EFI/$BOOT/refind_entries.conf
-sudo cp -rf /etc/refind.d/refind.conf /boot/efi/EFI/$BOOT/refind.conf
-echo "include theme/theme.conf" | sudo tee -a /boot/efi/EFI/$BOOT/refind.conf
-[[ ! -z $BIG_ICON_SIZE ]] && echo "big_icon_size $BIG_ICON_SIZE" | sudo tee -a /boot/efi/EFI/$BOOT/refind.conf
-[[ ! -z $SMALL_ICON_SIZE ]] && echo "small_icon_size $SMALL_ICON_SIZE" | sudo tee -a /boot/efi/EFI/$BOOT/refind.conf
-[[ -f "/boot/efi/EFI/$BOOT/icons/bg.png" ]] && echo "banner icons/bg.png" | sudo tee -a /boot/efi/EFI/$BOOT/refind.conf
+echo $ESP
+echo -e "$main_entry" | sudo tee $ESP/EFI/$BOOT/refind_entries.conf
+sudo cp -rf /etc/refind.d/refind.conf $ESP/EFI/$BOOT/refind.conf
+echo "include theme/theme.conf" | sudo tee -a $ESP/EFI/$BOOT/refind.conf
+[[ ! -z $BIG_ICON_SIZE ]] && echo "big_icon_size $BIG_ICON_SIZE" | sudo tee -a $ESP/EFI/$BOOT/refind.conf
+[[ ! -z $SMALL_ICON_SIZE ]] && echo "small_icon_size $SMALL_ICON_SIZE" | sudo tee -a $ESP/EFI/$BOOT/refind.conf
+[[ -f "/boot/efi/EFI/$BOOT/icons/bg.png" ]] && echo "banner icons/bg.png" | sudo tee -a $ESP/EFI/$BOOT/refind.conf

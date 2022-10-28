@@ -112,7 +112,7 @@
 # with which they first appeared.
 
 RootDir="/"
-TargetDir=/EFI/phyos
+TargetDir=/EFI/refind
 LocalKeysBase="refind_local"
 ShimSource="none"
 ShimType="none"
@@ -1232,6 +1232,9 @@ FindMountedESP() {
    mount /boot/efi &> /dev/null
    mount /efi &> /dev/null
    EspLine=$(df "$RootDir/efi" 2> /dev/null | grep efi)
+   if [[ -z "$EspLine" ]] ; then
+      EspLine=$(df "$RootDir"/efiboot 2> /dev/null | grep efiboot)
+   fi
    if [[ -z "$EspLine" ]] ; then
       EspLine=$(df "$RootDir"/boot/efi 2> /dev/null | grep boot/efi)
    fi
