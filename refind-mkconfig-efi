@@ -21,7 +21,7 @@ generate_menuentry() {
         DEFAULT_KERNEL=$(ls /boot | grep "vmlinuz-linux\|vmlinuz-linux-zen\|vmlinuz-linux-hardened\|vmlinuz-linux-lts" | cut -d "-" -f 2- | awk 'IF NR==1 {print $1}')
     fi
     main_entry="\n${main_entry}menuentry \"$1\" {\n"
-#    [[ -f $ESP/$BOOT/$ICONS/os_$os_icon.png ]] && main_entry+="\ticon $BOOT/$ICONS/os_$os_icon.png \n"
+    [[ -f $ESP/$BOOT/$ICONS/os_$os_icon.png ]] && main_entry+="\ticon $BOOT/$ICONS/os_$os_icon.png \n"
     [[ -n $volume ]] && main_entry+="\tvolume $2\n"
     main_entry+="\tostype Linux\n"
     main_entry+="\tloader EFI/$os_icon/vmlinuz-$DEFAULT_KERNEL\n"
@@ -48,7 +48,7 @@ generate_otheros() {
     else
         os_icon=$(echo "$1" | tr [:upper:] [:lower:])
         main_entry="\n${main_entry}menuentry \"$1\" {\n"
-#        [[ -f $ESP/$BOOT/$ICONS/os_$os_icon.png ]] && main_entry+="\ticon $BOOT/$ICONS/os_$os_icon.png \n"
+        [[ -f $ESP/$BOOT/$ICONS/os_$os_icon.png ]] && main_entry+="\ticon $BOOT/$ICONS/os_$os_icon.png \n"
         main_entry+="\tostype Linux\n"
         main_entry+="\tloader EFI/$1/$2\n"
         main_entry+="\tinitrd EFI/$1/$3\n"
@@ -87,7 +87,6 @@ done
 BOOT="$ESP/$BOOT"
 echo -e "$main_entry" | sudo tee $BOOT/refind_entries.conf
 sudo cp -rf /etc/refind.d/refind.conf $BOOT/refind.conf
-echo "icons_dir $ICONS" | sudo tee -a $BOOT/refind.conf
 echo "include theme/theme.conf" | sudo tee -a $BOOT/refind.conf
 [[ ! -z $BIG_ICON_SIZE ]] && echo "big_icon_size $BIG_ICON_SIZE" | sudo tee -a $BOOT/refind.conf
 [[ ! -z $SMALL_ICON_SIZE ]] && echo "small_icon_size $SMALL_ICON_SIZE" | sudo tee -a $BOOT/refind.conf
