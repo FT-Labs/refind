@@ -1,7 +1,8 @@
 #!/bin/bash
 
-source /etc/default/refind || [[ $(echo "Can't find /etc/default/refind, please check again" && exit 1) ]]
+source /usr/share/refind/refind-auto/refind || [[ $(echo "Can't find /usr/share/refind/refind-auto/refind, please check again" && exit 1) ]]
 ESP=$(cat /etc/fstab | awk '{print $1}' | grep "EFI" | sed 's|EFI.*||g')
+OS_DISTRIBUTOR=$(cat /etc/fstab | awk '{print $1}' | sed '/\#/d' | grep "EFI" | tr "/" " " | awk '{print $NF}' )
 BOOT="EFI/refind"
 [[ -z $ICONS ]] && ICONS="icons" || ICONS="icons/icons-$ICONS"
 
@@ -16,28 +17,20 @@ fi
 
 generate_menuentry() {
     os_icon=$(echo "$1" | tr [:upper:] [:lower:])
-    if [[ ! $(ls /boot | grep $DEFAULT_KERNEL 2>/dev/null) ]]; then
-        echo "$DEFAULT_KERNEL not found in /boot. Automatically setting default kernel..."
-        DEFAULT_KERNEL=$(ls /boot | grep "vmlinuz-linux\|vmlinuz-linux-zen\|vmlinuz-linux-hardened\|vmlinuz-linux-lts" | cut -d "-" -f 2- | awk 'IF NR==1 {print $1}')
-    fi
-    main_entry="\n${main_entry}menuentry \"$1\" {\n"
-    [[ -f $ESP/$BOOT/$ICONS/os_$os_icon.png ]] && main_entry+="\ticon $BOOT/$ICONS/os_$os_icon.png \n"
-    [[ -n $volume ]] && main_entry+="\tvolume $2\n"
-    main_entry+="\tostype Linux\n"
-    main_entry+="\tloader EFI/$os_icon/vmlinuz-$DEFAULT_KERNEL\n"
-    main_entry+="\tinitrd EFI/$os_icon/initramfs-$DEFAULT_KERNEL.img\n"
-    main_entry+="\toptions \"root=$root rw add_efi_memmap $REFIND_CMDLINE_LINUX $REFIND_CMDLINE_LINUX_DEFAULT $ucode\"\n"
-    main_entry+="\tsubmenuentry \"Boot using safe graphics\" {\n"
-    main_entry+="\t\tinitrd /initramfs-$DEFAULT_KERNEL-safegraphics.img\n"
-    main_entry+="\t\toptions \"root=$root rw add_efi_memmap $REFIND_CMDLINE_LINUX_DEFAULT\"\n\t}\n"
-}
 
-generate_submenuentry() {
-    sub_entry+="\tsubmenuentry \"$1\" {\n"
-    sub_entry+="\t  loader $BOOT/vmlinuz-$1\n"
-    sub_entry+="\t  initrd $BOOT/initramfs-$1.img\n"
-    sub_entry+="\t  options \"root=$root rw add_efi_memmap $REFIND_CMDLINE_LINUX $REFIND_CMDLINE_LINUX_DEFAULT $ucode\" \n\t}"
-    printf "%s" "$sub_entry\n"
+    if [[ $(echo -e "$main_entry" | grep -w "\"$1\"") ]]; then
+        main_entry+="\tsubmenuentry \"Boot using $3\" {\n"
+        main_entry+="\t\tloader /EFI/$os_icon/$2\n"
+        main_entry+="\t\tinitrd /EFI/$os_icon/$3\n"
+        main_entry+="\t\toptions \"root=$root rw add_efi_memmap $REFIND_CMDLINE_LINUX_DEFAULT\"\n\t}\n"
+    else
+        main_entry="menuentry \"$1\" {\n"
+        [[ -f $ESP/$BOOT/$ICONS/os_$os_icon.png ]] && main_entry+="\ticon $BOOT/$ICONS/os_$os_icon.png \n"
+        main_entry+="\tostype Linux\n"
+        main_entry+="\tloader EFI/$os_icon/$2\n"
+        main_entry+="\tinitrd EFI/$os_icon/$3\n"
+        main_entry+="\toptions \"root=$root rw add_efi_memmap $REFIND_CMDLINE_LINUX $REFIND_CMDLINE_LINUX_DEFAULT $ucode\"\n"
+    fi
 }
 
 generate_otheros() {
@@ -52,7 +45,7 @@ generate_otheros() {
         main_entry+="\tostype Linux\n"
         main_entry+="\tloader EFI/$1/$2\n"
         main_entry+="\tinitrd EFI/$1/$3\n"
-        main_entry+="\toptions \"root=$4 $REFIND_CMDLINE_LINUX $REFIND_CMDLINE_LINUX_DEFAULT $ucode\"\n"
+        main_entry+="\toptions \"root=$4 rw add_efi_memmap $REFIND_CMDLINE_LINUX $REFIND_CMDLINE_LINUX_DEFAULT $ucode\"\n"
     fi
 }
 
@@ -62,20 +55,33 @@ is_lvm=$(sudo lvs -o lv_name | awk '{if(NR>1)print}' | tr -d " " | while read lv
 
 [[ ! -z $is_lvm ]] && root="/dev/mapper/$root" || root="/dev/$root"
 
-generate_menuentry "$OS_DISTRIBUTOR"
-sub=$(ls /boot | grep "vmlinuz" | cut -d "-" -f 2- | while read k; do
-    [[ $k != $DEFAULT_KERNEL ]] && generate_submenuentry $k
-done)
-main_entry="$main_entry$sub}\n"
+kernels=$(ls /boot | grep "vmlinuz" | cut -d "-" -f 2- | sort -r)
+DEFAULT_KERNEL="$(echo "$kernels" | grep -wx "$DEFAULT_KERNEL")"
+DEFAULT_KERNEL+=\n
+[[ -n $DEFAULT_KERNEL ]] && kernels="$DEFAULT_KERNEL$(echo "$kernels" | sed "s/^$DEFAULT_KERNEL\$//")"
 
-oses=$(ls /$ESP/EFI | grep -v "refind\|tools\|phyos")
+for kern in $kernels; do
+    loader="vmlinuz-$kern"
+    others=$(echo "$kernels" | grep -vx "$kern")
+    main_ent=$(ls /boot | grep "initramfs" | grep -v "$others\|*.tmp"  || ls /boot | grep "initrd" | grep -v "$others")
+    [[ -z $main_ent ]] && main_ent=$(ls /boot | grep "initramfs" | grep -w "$kern"  || ls /boot | grep "initrd" | grep -w "$kern")
+    for ent in $(echo "$main_ent" | tr " " "\n"); do
+        generate_menuentry "$OS_DISTRIBUTOR" "$loader" "$ent"
+    done
+    main_entry+="\n}\n"
+done
+
+
+oses=$(ls /$ESP/EFI | grep -v "refind\|tools\|$OS_DISTRIBUTOR")
 _osprober=$(sudo os-prober)
 
 for os in $oses; do
     kernels=$(ls /$ESP/EFI/$os | grep "vmlinuz" | cut -d "-" -f 2- | sort -r)
     for kern in $kernels; do
         loader="vmlinuz-$kern"
-        main_ent=$(ls /$ESP/EFI/$os | grep "initramfs" | grep -w $kern || ls /$ESP/EFI/$os | grep "initrd" | grep "$kern")
+        others=$(echo "$kernels" | grep -vx "$kern")
+        main_ent=$(ls /$ESP/EFI/$os | grep "initramfs" | grep -v "$others\|*.tmp"  || ls /boot | grep "initrd" | grep -v "$others")
+        [[ -z $main_ent ]] && main_ent=$(ls /$ESP/EFI/$os | grep "initramfs" | grep -w "$kern"  || ls /$ESP/EFI/$os | grep "initrd" | grep -w "$kern")
         root=$(echo "$_osprober" | grep -i "$os" | cut -d ":" -f 1)
         for r in $root; do
             generate_otheros "$os" "$loader" "$main_ent" "$r"

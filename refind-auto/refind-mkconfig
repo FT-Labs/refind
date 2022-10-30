@@ -49,12 +49,12 @@ done
 ESP=$(cat /etc/fstab | grep -w "LABEL=REPHYND")
 if [[ -n $ESP ]]; then
     echo "phyOS rePHYnd efi support detected, calling EFI file maker..."
-    sudo refind-mkconfig-efi $@
+    sudo /usr/share/refind/refind-auto/refind-mkconfig-efi $@
     exit $?
 fi
 ESP=/boot/efi
 
-source /etc/default/refind || [[ $(echo "Can't find /etc/default/refind, please check again" && exit 1) ]]
+source /usr/share/refind/refind-auto/refind || [[ $(echo "Can't find /usr/share/refind/refind-auto/refind, please check again" && exit 1) ]]
 BOOT=refind
 refind_cfg="/boot/efi/EFI/$BOOT/refind.conf"
 [[ -z $ICONS ]] && ICONS="icons" || ICONS="icons/icons-$ICONS"

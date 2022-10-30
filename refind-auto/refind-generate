@@ -1,0 +1,15 @@
+#!/bin/sh
+
+REFIND_AUTO="/usr/local/share/refind-auto/"
+export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$REFIND_AUTO"
+
+
+wait() {
+    while [[ ! -z $(sudo find /boot -mmin -0.2) ]]; do
+        sleep 1
+    done
+    sudo $REFIND_AUTO/refind-mkconfig
+}
+
+[[ $($REFIND_AUTO/inotifywait -r /boot -e create,delete,modify) ]] &&
+    wait
