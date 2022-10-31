@@ -68,8 +68,8 @@ for kern in $kernels; do
     for ent in $(echo "$main_ent" | tr ' ' '\n'); do
         generate_menuentry "$OS_DISTRIBUTOR" "$loader" "$ent"
     done
-    main_entry+="\n}\n"
 done
+main_entry+="\n}\n"
 
 
 oses=$(ls /$ESP/EFI | grep -v "refind\|tools\|$OS_DISTRIBUTOR")

@@ -27,7 +27,7 @@ elif [[ ! -z $set ]]; then
     chosen=$(gum choose $theme)
     sudo mkdir -p $ESP/theme/
     sudo rm -rf $ESP/theme/*
-    sudo cp -rf /usr/share/refind/themes/$chosen/* $ESP/theme/
+    sudo cp -rf /usr/share/refind/themes/$chosen/* $ESP
     echo "$chosen theme set succesfully"
 fi
 
