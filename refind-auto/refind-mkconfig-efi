@@ -84,7 +84,9 @@ for os in $oses; do
         [[ -z $main_ent ]] && main_ent=$(ls /$ESP/EFI/$os | grep "initramfs" | grep -w "$kern"  || ls /$ESP/EFI/$os | grep "initrd" | grep -w "$kern")
         root=$(echo "$_osprober" | grep -i "$os" | cut -d ":" -f 1)
         for r in $root; do
-            generate_otheros "$os" "$loader" "$main_ent" "$r"
+            for ent in $(echo "$main_ent" | tr ' ' '\n' | sort); do
+                generate_otheros "$os" "$loader" "$ent" "$r"
+            done
         done
     done
     main_entry+="\n}\n"
