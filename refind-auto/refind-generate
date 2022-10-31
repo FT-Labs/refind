@@ -1,6 +1,6 @@
 #!/bin/sh
 
-REFIND_AUTO="/usr/local/share/refind-auto/"
+REFIND_AUTO="/usr/share/refind/refind-auto/"
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$REFIND_AUTO"
 
 

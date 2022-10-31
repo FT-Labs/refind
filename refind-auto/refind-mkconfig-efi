@@ -57,15 +57,15 @@ is_lvm=$(sudo lvs -o lv_name | awk '{if(NR>1)print}' | tr -d " " | while read lv
 
 kernels=$(ls /boot | grep "vmlinuz" | cut -d "-" -f 2- | sort -r)
 DEFAULT_KERNEL="$(echo "$kernels" | grep -wx "$DEFAULT_KERNEL")"
-DEFAULT_KERNEL+=\n
-[[ -n $DEFAULT_KERNEL ]] && kernels="$DEFAULT_KERNEL$(echo "$kernels" | sed "s/^$DEFAULT_KERNEL\$//")"
+nl=$'\n'
+[[ -n $DEFAULT_KERNEL ]] && kernels="${DEFAULT_KERNEL}${nl}$(echo "$kernels" | sed "s/^$DEFAULT_KERNEL$//")"
 
 for kern in $kernels; do
     loader="vmlinuz-$kern"
     others=$(echo "$kernels" | grep -vx "$kern")
     main_ent=$(ls /boot | grep "initramfs" | grep -v "$others\|*.tmp"  || ls /boot | grep "initrd" | grep -v "$others")
     [[ -z $main_ent ]] && main_ent=$(ls /boot | grep "initramfs" | grep -w "$kern"  || ls /boot | grep "initrd" | grep -w "$kern")
-    for ent in $(echo "$main_ent" | tr " " "\n"); do
+    for ent in $(echo "$main_ent" | tr ' ' '\n'); do
         generate_menuentry "$OS_DISTRIBUTOR" "$loader" "$ent"
     done
     main_entry+="\n}\n"
