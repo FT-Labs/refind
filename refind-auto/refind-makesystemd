@@ -1,6 +1,0 @@
-#!/bin/sh
-
-sudo mkdir -p /usr/share/refind/refind-auto
-sudo cp -f * /usr/share/refind/refind-auto/
-sudo cp -rf /usr/share/refind/refind-auto/refind-generate.service /usr/lib/systemd/system/
-sudo systemctl enable refind-generate && sudo systemctl start refind-generate

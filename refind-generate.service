@@ -1,9 +1,0 @@
-[Service]
-ExecStart=/usr/local/bin/refind-generate
-Restart=always
-RestartSec=1
-StandardOutput=syslog
-StandardError=syslog
-
-[Install]
-WantedBy=multi-user.target

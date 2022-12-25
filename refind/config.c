@@ -859,7 +859,7 @@ static VOID AddSubmenu(LOADER_ENTRY *Entry, REFIT_FILE *File, REFIT_VOLUME *Volu
         return;
     SubEntry->me.Title        = StrDuplicate(Title);
 
-    while (((TokenCount = ReadTokenLine(File, &TokenList)) > 0) && (StrCmp(TokenList[0], L"}") != 0)) {
+    while (((TokenCount = ReadTokenLine(File, &TokenList)) > 0) && (StrCmp(TokenList[0], L"]") != 0)) {
 
         if (MyStriCmp(TokenList[0], L"loader") && (TokenCount > 1)) { // set the boot loader filename
             MyFreePool(SubEntry->LoaderPath);

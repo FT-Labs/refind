@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+
+_loader='/EFI/phyos/vmlinuz-linux'
+_initrd='/EFI/phyos/initramfs-linux.img'
+_root=$(findmnt / --noheadings | awk '{print $2}')
+_options="root=$_root loglevel=3 udev.log_level=3 quiet splash"
+eval `tr '[:upper:]' '[:lower:]' < /etc/lsb-release`
+
+make_menuentry() {
+    cat <<EOF
+
+menuentry "$1" {
+    loader $2
+    initrd $3
+    options "$4"
+
+EOF
+}
+
+make_subent() {
+for k in "$@"; do
+    cat <<EOF
+        subentry "$k" [
+            options "$_options kern=$k"
+        ]
+EOF
+done
+}
+
+make_physub() {
+    __initrd=${1#*-}
+    cat << EOF
+    subentry "$1" [
+        loader $1
+        initrd initramfs-$__initrd.img
+        options "$_options"
+    ]
+EOF
+}
+
+cat /efiboot/EFI/refind/refind_entries.conf | ( \
+    read -d '{' _os
+    read -d '}' _osargs
+    if [[ -z $(echo "$_os" | grep "$distrib_id") ]]; then
+        printf "%s {\n%s\n}\n" "$_os" "$_osargs"
+    fi
+) 2>/dev/null
+
+
+if [ "$distrib_id" = "phyos" ]; then
+    ls /boot | grep -w "vmlinuz" | (read -r line; make_menuentry "$distrib_id" "$_loader" "$_initrd" "$_options";
+        while read k; do
+            make_physub $k
+        done
+    )
+else
+    kerns=$(find /boot -type f -exec sh -c "grep --text -m 1 'video mode' -A2 {} | tail -1 | awk '{print \$1}'" \; 2>/dev/null)
+    make_menuentry $_os $_loader $_initrd $_options
+    make_subent $kerns
+    echo "}\n"
+fi
